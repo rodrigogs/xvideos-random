@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@rodrigogs/xvideos": "^1.1.3",
+    "@rodrigogs/xvideos": "^1.2.0",
     "axios": "^0.21.1",
     "koa": "^2.13.1",
     "koa-router": "^10.0.0",

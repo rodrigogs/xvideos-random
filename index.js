@@ -15,7 +15,15 @@ const getRandomVideo = async () => {
   const randomNumber = randomIntFromInterval(0, 5000)
   const freshVideos = await xvideos.videos.fresh({ page: randomNumber })
   const randomVideoIndex = randomIntFromInterval(0, freshVideos.videos.length - 1)
-  const detail = await xvideos.videos.details(freshVideos.videos[randomVideoIndex])
+  const detail = await xvideos.videos.details({
+    url: freshVideos.videos[randomVideoIndex].url,
+	puppeteerConfig: {
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+      ],
+    },
+  })
   const fileKey = `${randomNumber}_${randomVideoIndex}`
   return { fileKey, ...detail }
 }
