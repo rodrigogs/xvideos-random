@@ -1,10 +1,11 @@
 const fs = require('fs')
-const path = require('path')
 const Koa = require('koa')
 const Router = require('koa-router')
 const send = require('koa-send')
 const xvideos = require('@rodrigogs/xvideos')
+const { v4: uuid } = require('uuid')
 const downloadImage = require('./download-image')
+const db = require('./db')
 
 const app = new Koa()
 const router = new Router()
@@ -17,7 +18,7 @@ const getRandomVideo = async () => {
   const randomVideoIndex = randomIntFromInterval(0, freshVideos.videos.length - 1)
   const detail = await xvideos.videos.details({
     url: freshVideos.videos[randomVideoIndex].url,
-	puppeteerConfig: {
+    puppeteerConfig: {
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -26,6 +27,32 @@ const getRandomVideo = async () => {
   })
   const fileKey = `${randomNumber}_${randomVideoIndex}`
   return { fileKey, ...detail }
+}
+
+const metrify = () => async (ctx, next) => {
+  const requestInfo = {
+    origin: ctx.request.origin,
+    headers: ctx.request.headers,
+    method: ctx.request.method,
+    url: ctx.request.url,
+    originalUrl: ctx.request.originalUrl,
+    href: ctx.request.href,
+    path: ctx.request.path,
+    querystring: ctx.request.querystring,
+    search: ctx.request.search,
+    host: ctx.request.host,
+    hostname: ctx.request.hostname,
+    type: ctx.request.type,
+    ip: ctx.request.ip,
+    ips: ctx.request.ips,
+  }
+  const requestId = uuid()
+  await db.set(requestId, requestInfo)
+  try {
+    await next()
+  } catch (err) {
+    await db.set(requestId, { ...requestInfo, failed: err.message })
+  }
 }
 
 router.get('/image', async (ctx) => {
@@ -45,6 +72,7 @@ router.get('/video', async (ctx) => {
 })
 
 app
+  .use(metrify())
   .use(router.routes())
   .use(router.allowedMethods())
 

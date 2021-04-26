@@ -11,8 +11,11 @@
   "dependencies": {
     "@rodrigogs/xvideos": "^1.2.0",
     "axios": "^0.21.1",
+    "date-fns": "^2.21.1",
+    "dontpad-api": "^1.0.5",
     "koa": "^2.13.1",
     "koa-router": "^10.0.0",
-    "koa-send": "^5.0.1"
+    "koa-send": "^5.0.1",
+    "uuid": "^8.3.2"
   }
 }
