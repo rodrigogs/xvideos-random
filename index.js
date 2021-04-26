@@ -1,13 +1,21 @@
+const path = require('path')
 const fs = require('fs')
 const Koa = require('koa')
 const Router = require('koa-router')
 const send = require('koa-send')
+const Pug = require('koa-pug')
 const xvideos = require('@rodrigogs/xvideos')
 const { v4: uuid } = require('uuid')
+const axios = require('axios')
 const downloadImage = require('./download-image')
 const db = require('./db')
 
 const app = new Koa()
+const pug = new Pug({
+  viewPath: path.resolve(__dirname, './views'),
+  app,
+})
+pug.use(app)
 const router = new Router()
 
 const randomIntFromInterval = (min, max) => Math.floor(Math.random() * (max - min + 1) + min)
@@ -68,7 +76,10 @@ router.get('/image', async (ctx) => {
 
 router.get('/video', async (ctx) => {
   const randomVideo = await getRandomVideo()
-  ctx.redirect(randomVideo.files.high)
+  await ctx.render('video', {
+    posterImage: randomVideo.image,
+    videoUrl: randomVideo.files.high,
+  }, true)
 })
 
 app

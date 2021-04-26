@@ -1,0 +1,36 @@
+head
+  link(href='https://vjs.zencdn.net/7.11.4/video-js.css' rel='stylesheet')
+body
+  video(
+    id='player'
+    class='video-js'
+    controls
+    poster=posterImage
+    data-setup='{ "fill": true }'
+  )
+    source(src=videoUrl type='video/mp4')
+    p.vjs-no-js To view this video please enable JavaScript, and consider upgrading to a web browser that
+    a(href='https://videojs.com/html5-video-support/' target='_blank') supports HTML5 video
+
+  script(src='https://vjs.zencdn.net/7.11.4/video.min.js')
+  script.
+    const wait = (timeout) => new Promise(resolve => setTimeout(resolve, timeout))
+    const playerReady = async (player) => {
+      let playing = false
+      do {
+        try {
+          await player.play()
+          playing = true
+        } catch (err) {
+          // eslint-disable-next-line no-console
+          console.error(err)
+        } finally {
+          await wait(1000)
+        }
+      } while (!playing)
+    }
+    const player = videojs('#player', {
+      preload: 'auto',
+      autoplay: true,
+    })
+    player.on('ready', function () { playerReady(this) })
