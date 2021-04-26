@@ -24,8 +24,11 @@ router.get('/image', async (ctx) => {
   const randomVideo = await getRandomVideo()
   const fileName = `${randomVideo.fileKey}.jpg`
   await downloadImage(randomVideo.image, fileName)
-  await send(ctx, fileName)
-  await fs.promises.unlink(fileName)
+  try {
+    await send(ctx, fileName)
+  } finally {
+    await fs.promises.unlink(fileName)
+  }
 })
 
 router.get('/video', async (ctx) => {
