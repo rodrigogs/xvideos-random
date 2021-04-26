@@ -37,4 +37,4 @@ app
   .use(router.routes())
   .use(router.allowedMethods())
 
-app.listen(5200)
+app.listen(process.env.PORT || 5200)
