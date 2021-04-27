@@ -17,11 +17,13 @@ module.exports = () => async (ctx, next) => {
     ip: JSON.stringify(ctx.request.ip),
     ips: JSON.stringify(ctx.request.ips),
   }
-  const requestId = uuid()
-  await db.set(requestId, requestInfo)
+  let error
   try {
     await next()
   } catch (err) {
-    await db.set(requestId, { ...requestInfo, failed: err.message })
+    error = err.message
+    throw err
+  } finally {
+    await db.set({ ...requestInfo, error }, 'requests')
   }
 }

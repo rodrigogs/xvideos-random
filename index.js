@@ -2,7 +2,7 @@ const path = require('path')
 const Koa = require('koa')
 const Router = require('koa-router')
 const Pug = require('koa-pug')
-// const metrify = require('./metrify')
+const metrify = require('./metrify')
 const db = require('./db')
 
 require('./cache')
@@ -16,7 +16,10 @@ pug.use(app)
 const router = new Router()
 
 router.get('/', async (ctx) => {
-  await ctx.render('index', {}, true)
+  await ctx.render('index', {
+    videoIndexCount: await db.count(),
+    requestsCount: await db.count('requests'),
+  }, true)
 })
 
 router.get('/image', async (ctx) => {
@@ -37,7 +40,7 @@ router.get('/video', async (ctx) => {
 })
 
 app
-  // .use(metrify())
+  .use(metrify())
   .use(router.routes())
   .use(router.allowedMethods())
 
