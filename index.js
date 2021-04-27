@@ -15,6 +15,10 @@ const pug = new Pug({
 pug.use(app)
 const router = new Router()
 
+router.get('/', async (ctx) => {
+  await ctx.render('index', {}, true)
+})
+
 router.get('/image', async (ctx) => {
   const randomVideo = await db.getRandom()
   await ctx.render('image', {
