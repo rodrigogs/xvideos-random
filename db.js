@@ -1,46 +1,56 @@
-const dontpad = require('dontpad-api')
+const path = require('path')
+const fs = require('fs-extra')
+const formatDate = require('date-fns/format')
 const { v4: uuid } = require('uuid')
 
-const INDEX_ID = process.env.INDEX_ID
+const ensurePartition = (partition) => fs.ensureDirSync(partition)
 
-const serialize = (obj) => Object.keys(obj).reduce((serialized, key) => {
-  const value = obj[key]
-  return `${serialized}${key}:${value}\n`
-}, '')
+const getCurrentPartition = async () => {
+  const currentHour = formatDate(new Date(), 'dd-MM-yyyy-hh')
+  const [day, month, year, hour] = currentHour.split('-')
+  const partition = `year=${year}/month=${month}/day=${day}/hour=${hour}`
+  await ensurePartition(path.resolve(__dirname, 'db', partition))
+  return partition
+}
 
-const deserialize = (str) => str.split('\n').reduce((obj, line) => {
-  if (!line.length) return obj
-  const [key, value] = line.split(':')
-  return { ...obj, [key]: value }
-}, {})
+const randomIntFromInterval = (min, max) => Math.floor(Math.random() * (max - min + 1) + min)
 
-const readOrCreateIndex = async () => {
-  const indexContent = await dontpad.readContent(process.env.INDEX_ID)
-  if (!indexContent.length) {
-    const initial = serialize({ version: 0 })
-    await dontpad.writeContent(INDEX_ID, initial)
-    return deserialize(initial)
-  }
-  return deserialize(indexContent)
+const getRandomPartition = async () => {
+  const years = await fs.readdir(path.resolve(__dirname, 'db'))
+  const randomYear = years[randomIntFromInterval(0, years.length - 1)]
+  const months = await fs.readdir(path.resolve(__dirname, 'db', randomYear))
+  const randomMonth = months[randomIntFromInterval(0, months.length - 1)]
+  const days = await fs.readdir(path.resolve(__dirname, 'db', randomYear, randomMonth))
+  const randomDay = days[randomIntFromInterval(0, days.length - 1)]
+  const hours = await fs.readdir(path.resolve(__dirname, 'db', randomYear, randomMonth, randomDay))
+  const randomHour = hours[randomIntFromInterval(0, hours.length - 1)]
+  return `${randomYear}/${randomMonth}/${randomDay}/${randomHour}`
+}
+
+const getRandomDocument = async (partition) => {
+  const documents = await fs.readdir(path.resolve(__dirname, 'db', partition))
+  return documents[randomIntFromInterval(0, documents.length - 1)]
 }
 
 module.exports = {
-  async get(id) {
-    const index = await readOrCreateIndex()
-    return deserialize(dontpad.readContent(index[id]))
+  async getRandom() {
+    const partition = await getRandomPartition()
+    const document = await getRandomDocument(partition)
+    return fs.readJson(path.resolve(__dirname, 'db', `${partition}/${document}`))
   },
-  async set(id, value) {
-    const index = await readOrCreateIndex()
-    const ref = uuid()
-    await dontpad.writeContent(ref, serialize(value))
-    const updatedIndex = await readOrCreateIndex()
-    if (index.version !== updatedIndex.version) {
-      throw new Error('Conflict error. The index was updated.')
-    }
-    await dontpad.writeContent(INDEX_ID, serialize({
-      ...updatedIndex,
-      [id]: ref,
-      version: Number(updatedIndex.version) + 1,
-    }))
+  async get(id) {
+    const [partition, uid] = id.split('-§§-')
+    const filePath = path.resolve(__dirname, 'db', partition, uid)
+    if (await fs.pathExists(filePath)) return fs.readJson(filePath)
+    return undefined
+  },
+  async set(object) {
+    const partition = await getCurrentPartition()
+    const uid = uuid()
+    const documentPath = path.resolve(__dirname, 'db', partition, uid)
+    await fs.writeJson(documentPath, {
+      ...object,
+      __id: `${partition}-§§-${uid}`,
+    })
   },
 }
