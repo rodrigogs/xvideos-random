@@ -38,7 +38,7 @@ module.exports = {
     for (let i = 0; i < 5; i++) {
       const partition = await getRandomPartition(seed)
       const document = await getRandomDocument(partition, seed)
-      const candidate = fs.readJson(path.resolve(__dirname, seed, `${partition}/${document}`))
+      const candidate = await fs.readJson(path.resolve(__dirname, seed, `${partition}/${document}`))
       candidates.push(candidate)
     }
     const initial = candidates.pop()
