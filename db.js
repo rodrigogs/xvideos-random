@@ -34,9 +34,18 @@ const getRandomDocument = async (partition, seed = 'db') => {
 
 module.exports = {
   async getRandom(seed = 'db') {
-    const partition = await getRandomPartition(seed)
-    const document = await getRandomDocument(partition, seed)
-    return fs.readJson(path.resolve(__dirname, seed, `${partition}/${document}`))
+    const candidates = []
+    for (let i = 0; i < 5; i++) {
+      const partition = await getRandomPartition(seed)
+      const document = await getRandomDocument(partition, seed)
+      const candidate = fs.readJson(path.resolve(__dirname, seed, `${partition}/${document}`))
+      candidates.push(candidate)
+    }
+    const initial = candidates.pop()
+    return candidates.reduce((winner, candidate) => {
+      if (candidate.weight > winner.weight) return candidate
+      return winner
+    }, initial)
   },
   async count(seed = 'db') {
     let total = 0
@@ -67,8 +76,15 @@ module.exports = {
     const uid = uuid()
     const documentPath = path.resolve(__dirname, seed, partition, uid)
     await fs.writeJson(documentPath, {
-      ...object,
       __id: `${partition}-§§-${uid}`,
+      ...object,
+    })
+  },
+  async update(partition, id, object, seed = 'db') {
+    const documentPath = path.resolve(__dirname, seed, partition, id)
+    await fs.writeJson(documentPath, {
+      __id: `${partition}-§§-${id}`,
+      ...object,
     })
   },
 }

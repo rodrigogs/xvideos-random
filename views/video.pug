@@ -5,7 +5,40 @@ head
     body {
       margin: 0;
     }
+    .grid-container {
+      position: fixed;
+      display: grid;
+      grid-template-columns: auto auto;
+      z-index: 1;
+      min-width: 100%;
+      min-height: 100%;
+    }
+    .grid-item {
+      background-color: rgba(255, 255, 255, 0);
+      border: 1px solid rgba(0, 0, 0, 0.8);
+      font-size: 30px;
+      text-align: center;
+      cursor: pointer;
+    }
+    .grid-item:hover {
+      background-color: rgba(255, 255, 255, 0.5);
+      transition: background-color .4s ease-out;
+    }
+    .grid-item.like:hover {
+      background-color: rgba(67, 217, 25, .3);
+      transition: background-color .4s ease-out;
+    }
+    .grid-item.dislike:hover {
+      background-color: rgba(215, 35, 35, .3);
+      transition: background-color .4s ease-out;
+    }
 body
+  input#video-id(type='hidden' value=videoId)
+
+  div.grid-container
+    div.grid-item.like
+    div.grid-item.dislike
+
   video(
     id='player'
     class='video-js'
@@ -21,11 +54,15 @@ body
   script.
     const wait = (timeout) => new Promise(resolve => setTimeout(resolve, timeout))
     const playerReady = async (player) => {
+      window.player = player
       let playing = false
       do {
         try {
           await player.play()
           playing = true
+          setTimeout(() => {
+            document.querySelector('div.grid-container').style.display = 'grid'
+          }, 30000)
         } catch (err) {
           // eslint-disable-next-line no-console
           console.error(err)
@@ -39,3 +76,36 @@ body
       autoplay: true,
     })
     player.on('ready', function () { playerReady(this) })
+
+  script.
+    const id = document.querySelector('#video-id').value
+    const grid = document.querySelector('div.grid-container')
+
+    grid.style.display = 'none'
+
+    const like = () => {
+      fetch(`${window.location.origin}/like`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ id })
+      })
+      document.querySelector('div.grid-container').remove()
+    }
+
+    const dislike = () => {
+      fetch(`${window.location.origin}/dislike`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ id })
+      })
+      document.querySelector('div.grid-container').remove()
+    }
+
+    document.querySelector('div.grid-item.like').addEventListener('click', like)
+    document.querySelector('div.grid-item.dislike').addEventListener('click', dislike)

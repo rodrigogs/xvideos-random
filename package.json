@@ -15,6 +15,7 @@
     "dontpad-api": "^1.0.5",
     "fs-extra": "^9.1.0",
     "koa": "^2.13.1",
+    "koa-bodyparser": "^4.3.0",
     "koa-pug": "^5.0.0",
     "koa-router": "^10.0.0",
     "uuid": "^8.3.2"

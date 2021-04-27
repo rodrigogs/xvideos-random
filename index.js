@@ -1,5 +1,6 @@
 const path = require('path')
 const Koa = require('koa')
+const bodyParser = require('koa-bodyparser')
 const Router = require('koa-router')
 const Pug = require('koa-pug')
 const metrify = require('./metrify')
@@ -22,7 +23,8 @@ router.get('/', async (ctx) => {
   }, true)
 })
 
-router.get('/image', async (ctx) => {
+router.get('/image', async (ctx, next) => {
+  await metrify()(ctx, next)
   const randomVideo = await db.getRandom()
   await ctx.render('image', {
     videoTitle: randomVideo.title,
@@ -30,17 +32,39 @@ router.get('/image', async (ctx) => {
   }, true)
 })
 
-router.get('/video', async (ctx) => {
+router.get('/video', async (ctx, next) => {
+  await metrify()(ctx, next)
   const randomVideo = await db.getRandom()
   await ctx.render('video', {
     videoTitle: randomVideo.title,
     posterImage: randomVideo.image,
     videoUrl: randomVideo.files.high,
+    videoId: randomVideo.__id,
   }, true)
 })
 
+router.post('/like', async (ctx) => {
+  const { id } = ctx.request.body
+  const video = await db.get(id)
+  if (!video) throw new Error('Not found')
+  const [partition, uid] = id.split('-§§-')
+  const weight = (isNaN(video.weight) ? 0 : video.weight) + 1
+  await db.update(partition, uid, { video, weight })
+  ctx.status = 201
+})
+
+router.post('/dislike', async (ctx) => {
+  const { id } = ctx.request.body
+  const video = await db.get(id)
+  if (!video) throw new Error('Not found')
+  const [partition, uid] = id.split('-§§-')
+  const weight = (isNaN(video.weight) ? 0 : video.weight) - 1
+  await db.update(partition, uid, { video, weight })
+  ctx.status = 201
+})
+
 app
-  .use(metrify())
+  .use(bodyParser())
   .use(router.routes())
   .use(router.allowedMethods())
 
