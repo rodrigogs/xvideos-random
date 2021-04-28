@@ -79,7 +79,7 @@ const getRandomDocument = async (partition, dbRoot = DB_ROOT) => {
 }
 
 let warmingUp = false
-const warmup = async (dbRoot = DB_ROOT) => {
+const warmup = async (dbRoot = DB_ROOT, max = 10) => {
   if (warmingUp) return
   warmingUp = true
   const candidates = await readJson(path.join(dbRoot, 'candidates')) || []
@@ -97,7 +97,7 @@ const warmup = async (dbRoot = DB_ROOT) => {
     } catch (err) {
       console.error(err)
     }
-  } while(candidates.length < 10)
+  } while(candidates.length < 1)
   warmingUp = false
 }
 
