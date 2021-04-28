@@ -96,9 +96,9 @@ const warmup = async (self, dbRoot) => {
 
 module.exports = {
   async getRandom(dbRoot = DB_ROOT) {
+    warmup(this, dbRoot)
     if (!randomQueue.length) {
-      warmup(this, dbRoot)
-      await wait(3000)
+      await wait(2000)
       return this.getRandom(dbRoot)
     }
     const winner = randomQueue.reduce((winner, candidate) => {
@@ -107,7 +107,6 @@ module.exports = {
     }, undefined)
     const winnerIndex = randomQueue.findIndex((item) => item.__id === winner.__id)
     randomQueue.splice(winnerIndex, 1)
-    warmup(this, dbRoot)
     return winner
   },
   async count(dbRoot = DB_ROOT) {
