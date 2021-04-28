@@ -20,6 +20,10 @@ head
       text-align: center;
       cursor: pointer;
     }
+    .grid-item p {
+      padding: 43vh 0 0 0;
+      color: white;
+    }
     .grid-item:hover {
       background-color: rgba(255, 255, 255, 0.5);
       transition: background-color .4s ease-out;
@@ -37,7 +41,9 @@ body
 
   div.grid-container
     div.grid-item.like
+      p Gostei 😍
     div.grid-item.dislike
+      p Não gostei 🤬
 
   video(
     id='player'
@@ -76,6 +82,7 @@ body
       setTimeout(() => {
         document.querySelector('div.grid-container').style.display = 'grid'
       }, 30000)
+      document.querySelector('div.grid-container').style.display = 'grid'
       player.on('ended', () => document.location.reload(true))
     }
     const player = videojs('#player', {
