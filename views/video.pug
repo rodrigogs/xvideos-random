@@ -51,18 +51,21 @@ body
     a(href='https://videojs.com/html5-video-support/' target='_blank') supports HTML5 video
 
   script(src='https://vjs.zencdn.net/7.11.4/video.min.js')
+  script(src='//cdn.sc.gl/videojs-hotkeys/latest/videojs.hotkeys.min.js')
   script.
     const wait = (timeout) => new Promise(resolve => setTimeout(resolve, timeout))
     const playerReady = async (player) => {
       window.player = player
+      player.hotkeys({
+        volumeStep: 0.1,
+        seekStep: 5,
+        enableModifiersForNumbers: false
+      });
       let playing = false
       do {
         try {
           await player.play()
           playing = true
-          setTimeout(() => {
-            document.querySelector('div.grid-container').style.display = 'grid'
-          }, 30000)
         } catch (err) {
           // eslint-disable-next-line no-console
           console.error(err)
@@ -70,6 +73,10 @@ body
           await wait(1000)
         }
       } while (!playing)
+      setTimeout(() => {
+        document.querySelector('div.grid-container').style.display = 'grid'
+      }, 30000)
+      player.on('ended', () => document.location.reload(true))
     }
     const player = videojs('#player', {
       preload: 'auto',
