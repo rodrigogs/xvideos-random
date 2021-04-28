@@ -1,6 +1,6 @@
 head
   title=videoTitle
-  link(href='https://vjs.zencdn.net/7.11.4/video-js.css' rel='stylesheet')
+  link(href='//vjs.zencdn.net/7.11.4/video-js.css' rel='stylesheet')
   style.
     body {
       margin: 0;
@@ -62,8 +62,9 @@ body
     p.vjs-no-js To view this video please enable JavaScript, and consider upgrading to a web browser that
     a(href='https://videojs.com/html5-video-support/' target='_blank') supports HTML5 video
 
-  script(src='https://vjs.zencdn.net/7.11.4/video.min.js')
+  script(src='//vjs.zencdn.net/7.11.4/video.min.js')
   script(src='//cdn.sc.gl/videojs-hotkeys/latest/videojs.hotkeys.min.js')
+  script(src='//cdn.jsdelivr.net/gh/theonion/videojs-persistvolume/videojs.persistvolume.js')
   script.
     const wait = (timeout) => new Promise(resolve => setTimeout(resolve, timeout))
     const playerReady = async (player) => {
