@@ -33,7 +33,7 @@ const indexDocument = async (partition, id, dbRoot = DB_ROOT) => {
 }
 
 const getCurrentPartition = async (dbRoot = DB_ROOT) => {
-  const [day, month, year, hour] = formatDate(new Date(), 'dd-MM-yyyy-hh').split('-')
+  const [day, month, year, hour] = formatDate(new Date(), 'dd-MM-yyyy-HH').split('-')
   let partition = ''
   partition = await indexPartition(partition, `year=${year}`, dbRoot)
   partition = await indexPartition(partition, `month=${month}`, dbRoot)
