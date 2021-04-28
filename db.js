@@ -79,8 +79,10 @@ const getRandomDocument = async (partition, dbRoot = DB_ROOT) => {
 }
 
 const randomQueue = []
-
+let warmingUp = false
 const warmup = async (self, dbRoot) => {
+  if (warmingUp) return
+  warmingUp = true
   for (; randomQueue.length < 20;) {
     const partition = await getRandomPartition(dbRoot)
     const document = await getRandomDocument(partition, dbRoot)
@@ -89,13 +91,14 @@ const warmup = async (self, dbRoot) => {
     if (!candidate) continue
     randomQueue.push(candidate)
   }
+  warmingUp = false
 }
 
 module.exports = {
   async getRandom(dbRoot = DB_ROOT) {
     if (!randomQueue.length) {
       warmup(this, dbRoot)
-      await wait(5000)
+      await wait(3000)
       return this.getRandom(dbRoot)
     }
     const winner = randomQueue.reduce((winner, candidate) => {
