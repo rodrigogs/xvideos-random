@@ -20,7 +20,7 @@ router.get('/', async (ctx) => {
   await db.warmup('db', 1)
   await ctx.render('index', {
     videoIndexCount: await db.count(),
-    requestsCount: await db.count('requests'),
+    requestsCount: await db.count('db/requests'),
   }, true)
 })
 
