@@ -78,35 +78,45 @@ const getRandomDocument = async (partition, dbRoot = DB_ROOT) => {
   return documents[randomIntFromInterval(0, documents.length - 1)]
 }
 
-const randomQueue = []
 let warmingUp = false
-const warmup = async (self, dbRoot) => {
+const warmup = async (dbRoot = DB_ROOT) => {
   if (warmingUp) return
   warmingUp = true
-  for (; randomQueue.length < 20;) {
-    const partition = await getRandomPartition(dbRoot)
-    const document = await getRandomDocument(partition, dbRoot)
-    if (!document) continue
-    const candidate = await readJson(path.join(dbRoot, `${partition}/${document}`))
-    if (!candidate) continue
-    randomQueue.push(candidate)
-  }
+  const candidates = await readJson(path.join(dbRoot, 'candidates')) || []
+  do {
+    try {
+      const partition = await getRandomPartition(dbRoot)
+      const document = await getRandomDocument(partition, dbRoot)
+      if (!document) continue
+      const candidate = await readJson(path.join(dbRoot, `${partition}/${document}`))
+      if (!candidate) continue
+      if (candidates.includes(candidate)) continue
+      candidates.push(candidate.__id)
+      await writeJson(path.join(dbRoot, 'candidates'), candidates)
+    } catch (err) {
+      console.error(err)
+    }
+  } while(candidates.length < 10)
   warmingUp = false
 }
 
 module.exports = {
+  warmup,
   async getRandom(dbRoot = DB_ROOT) {
-    warmup(this, dbRoot)
-    if (!randomQueue.length) {
-      await wait(2000)
-      return this.getRandom(dbRoot)
-    }
-    const winner = randomQueue.reduce((winner, candidate) => {
+    warmup(dbRoot)
+    const candidateIds = await readJson(path.join(dbRoot, 'candidates')) || []
+    const candidates = await Promise.all(candidateIds.map(async (id) => {
+      const [partition, uid] = id.split('-§§-')
+      const filePath = path.join(dbRoot, partition, uid)
+      return await readJson(filePath)
+    }))
+    const winner = candidates.reduce((winner, candidate) => {
       if (!winner || candidate.weight > winner.weight) return candidate
       return winner
     }, undefined)
-    const winnerIndex = randomQueue.findIndex((item) => item.__id === winner.__id)
-    randomQueue.splice(winnerIndex, 1)
+    const winnerIndex = candidateIds.findIndex((id) => id === winner.__id)
+    candidateIds.splice(winnerIndex, 1)
+    await writeJson(path.join(dbRoot, 'candidates'), candidateIds)
     return winner
   },
   async count(dbRoot = DB_ROOT) {

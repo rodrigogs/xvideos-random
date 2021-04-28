@@ -17,6 +17,7 @@ pug.use(app)
 const router = new Router()
 
 router.get('/', async (ctx) => {
+  db.warmup()
   await ctx.render('index', {
     videoIndexCount: await db.count(),
     requestsCount: await db.count('requests'),
