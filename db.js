@@ -92,6 +92,7 @@ const warmup = async (dbRoot = DB_ROOT) => {
       if (!candidate) continue
       if (candidates.includes(candidate)) continue
       candidates.push(candidate.__id)
+      candidates.sort(() => Math.random() - 0.5)
       await writeJson(path.join(dbRoot, 'candidates'), candidates)
     } catch (err) {
       console.error(err)
