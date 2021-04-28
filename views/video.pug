@@ -94,6 +94,11 @@ body
     const player = videojs('#player', {
       preload: 'auto',
       autoplay: true,
+      plugins: {
+        persistvolume: {
+          namespace: 'So-Viral-So-Hot'
+        }
+      }
     })
     player.on('ready', function () { playerReady(this) })
 
