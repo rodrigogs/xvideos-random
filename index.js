@@ -31,7 +31,12 @@ router.get('/image', async (ctx, next) => {
 })
 
 router.get('/video', async (ctx, next) => {
-  const randomVideo = await db.getRandom()
+  let randomVideo = await db.getRandom()
+  if (randomVideo.video) { //FIXME remover um dia
+    const [partition, uid] = randomVideo.__id.split('-§§-')
+    await db.update(partition, uid, { ...randomVideo, ...randomVideo.video, video: undefined })
+    randomVideo = await db.get(uid)
+  }
   await ctx.render('video', {
     videoTitle: randomVideo.title,
     posterImage: randomVideo.image,
@@ -46,7 +51,7 @@ router.post('/like', async (ctx) => {
   if (!video) throw new Error('Not found')
   const [partition, uid] = id.split('-§§-')
   const weight = (isNaN(video.weight) ? 0 : video.weight) + 1
-  await db.update(partition, uid, { video, weight })
+  await db.update(partition, uid, { ...video, weight })
   ctx.status = 201
 })
 
@@ -56,7 +61,7 @@ router.post('/dislike', async (ctx) => {
   if (!video) throw new Error('Not found')
   const [partition, uid] = id.split('-§§-')
   const weight = (isNaN(video.weight) ? 0 : video.weight) - 1
-  await db.update(partition, uid, { video, weight })
+  await db.update(partition, uid, { ...video, weight })
   ctx.status = 201
 })
 
