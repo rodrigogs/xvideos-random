@@ -26,6 +26,7 @@ const incrementCache = async (times = 1) => {
   let i = 0
   do {
     const randomVideo = await getRandomVideo()
+    console.log('Storing random video...')
     await db.set(randomVideo)
   } while (i < times)
 }

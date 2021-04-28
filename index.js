@@ -6,6 +6,8 @@ const Pug = require('koa-pug')
 const metrify = require('./metrify')
 const db = require('./db')
 
+require('./cache')
+
 const app = new Koa()
 const pug = new Pug({
   viewPath: path.resolve(__dirname, './views'),
@@ -22,7 +24,7 @@ router.get('/', async (ctx) => {
   }, true)
 })
 
-router.get('/image', async (ctx, next) => {
+router.get('/image', async (ctx) => {
   const randomVideo = await db.getRandom()
   await ctx.render('image', {
     videoTitle: randomVideo.title,
@@ -30,7 +32,7 @@ router.get('/image', async (ctx, next) => {
   }, true)
 })
 
-router.get('/video', async (ctx, next) => {
+router.get('/video', async (ctx) => {
   let randomVideo = await db.getRandom()
   if (randomVideo.video) { //FIXME remover um dia
     const [partition, uid] = randomVideo.__id.split('-§§-')
