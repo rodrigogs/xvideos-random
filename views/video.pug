@@ -87,7 +87,7 @@ body
       } while (!playing)
       setTimeout(() => {
         document.querySelector('div.grid-container').style.display = 'grid'
-      }, 30000)
+      }, 10000)
       player.on('ended', () => document.location.reload(true))
     }
     const player = videojs('#player', {
