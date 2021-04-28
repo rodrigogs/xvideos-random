@@ -25,6 +25,6 @@ module.exports = () => async (ctx, next) => {
     error = err.message
     throw err
   } finally {
-    db.set({ ...requestInfo, error }, 'requests')
+    db.set({ ...requestInfo, error }, 'db/requests')
   }
 }
