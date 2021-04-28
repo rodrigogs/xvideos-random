@@ -3,6 +3,7 @@ const formatDate = require('date-fns/format')
 const { v4: uuid } = require('uuid')
 const dontpad = require('dontpad-api')
 const zlib = require('zlib')
+const wait = require('./wait')
 
 const DB_ROOT = process.env.DB_ROOT || 'db'
 
@@ -92,6 +93,11 @@ const warmup = async (self, dbRoot) => {
 
 module.exports = {
   async getRandom(dbRoot = DB_ROOT) {
+    if (!randomQueue.length) {
+      warmup(this, dbRoot)
+      await wait(5000)
+      return this.getRandom(dbRoot)
+    }
     const winner = randomQueue.reduce((winner, candidate) => {
       if (!winner || candidate.weight > winner.weight) return candidate
       return winner

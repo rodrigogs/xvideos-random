@@ -24,7 +24,6 @@ router.get('/', async (ctx) => {
 })
 
 router.get('/image', async (ctx, next) => {
-  await metrify()(ctx, next)
   const randomVideo = await db.getRandom()
   await ctx.render('image', {
     videoTitle: randomVideo.title,
@@ -33,7 +32,6 @@ router.get('/image', async (ctx, next) => {
 })
 
 router.get('/video', async (ctx, next) => {
-  await metrify()(ctx, next)
   const randomVideo = await db.getRandom()
   await ctx.render('video', {
     videoTitle: randomVideo.title,
@@ -64,6 +62,7 @@ router.post('/dislike', async (ctx) => {
 })
 
 app
+  .use(metrify())
   .use(bodyParser())
   .use(router.routes())
   .use(router.allowedMethods())

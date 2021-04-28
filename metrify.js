@@ -1,6 +1,7 @@
 const db = require('./db')
 
 module.exports = () => async (ctx, next) => {
+  if (!['/image', '/video'].includes(ctx.request.path)) return next()
   const requestInfo = {
     origin: JSON.stringify(ctx.request.origin),
     headers: JSON.stringify(ctx.request.headers),
@@ -24,6 +25,6 @@ module.exports = () => async (ctx, next) => {
     error = err.message
     throw err
   } finally {
-    await db.set({ ...requestInfo, error }, 'requests')
+    db.set({ ...requestInfo, error }, 'requests')
   }
 }
