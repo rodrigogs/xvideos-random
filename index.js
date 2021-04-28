@@ -6,8 +6,6 @@ const Pug = require('koa-pug')
 const metrify = require('./metrify')
 const db = require('./db')
 
-require('./cache')
-
 const app = new Koa()
 const pug = new Pug({
   viewPath: path.resolve(__dirname, './views'),

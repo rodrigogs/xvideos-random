@@ -2,6 +2,7 @@ const formatDate = require('date-fns/format')
 const { v4: uuid } = require('uuid')
 const dontpad = require('dontpad-api')
 const zlib = require('zlib')
+const xvideos = require('@rodrigogs/xvideos')
 
 const DB_ROOT = process.env.DB_ROOT || 'db'
 
@@ -79,7 +80,7 @@ const getRandomDocument = async (partition, dbRoot = DB_ROOT) => {
 }
 
 let warmingUp = false
-const warmup = async (dbRoot = DB_ROOT, max = 10) => {
+const warmup = (self) => async (dbRoot = DB_ROOT, max = 10) => {
   if (warmingUp) return
   warmingUp = true
   const candidates = await readJson(join(dbRoot, 'candidates')) || []
@@ -88,9 +89,11 @@ const warmup = async (dbRoot = DB_ROOT, max = 10) => {
       const partition = await getRandomPartition(dbRoot)
       const document = await getRandomDocument(partition, dbRoot)
       if (!document) continue
-      const candidate = await readJson(join(dbRoot, `${partition}/${document}`))
+      let candidate = await readJson(join(dbRoot, `${partition}/${document}`))
       if (!candidate) continue
       if (candidates.includes(candidate)) continue
+      candidate = await self.refresh(candidate)
+      if (!candidate) continue
       candidates.push(candidate.__id)
       candidates.sort(() => Math.random() - 0.5)
       await writeJson(join(dbRoot, 'candidates'), candidates)
@@ -102,9 +105,11 @@ const warmup = async (dbRoot = DB_ROOT, max = 10) => {
 }
 
 module.exports = {
-  warmup,
+  warmup(dbRoot = DB_ROOT, max = 10) {
+    return warmup(this)(dbRoot = DB_ROOT, max = 10)
+  },
   async getRandom(dbRoot = DB_ROOT) {
-    warmup(dbRoot)
+    warmup(this)(dbRoot)
     const candidateIds = await readJson(join(dbRoot, 'candidates')) || []
     const candidates = await Promise.all(candidateIds.map(async (id) => {
       const [partition, uid] = id.split('-§§-')
@@ -137,6 +142,24 @@ module.exports = {
       }
     }
     return total
+  },
+  async refresh(video, dbRoot = DB_ROOT) {
+    try {
+      const detail = await xvideos.videos.details({
+        url: video.url,
+        puppeteerConfig: {
+          args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+          ],
+        },
+      })
+      const [partition, uid] = video.__id.split('-§§-')
+      await this.update(partition, uid, { ...video, ...detail }, dbRoot)
+      return { ...video, ...detail }
+    } catch (err) {
+      return undefined
+    }
   },
   async get(id, dbRoot = DB_ROOT) {
     const [partition, uid] = id.split('-§§-')
