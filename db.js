@@ -99,9 +99,9 @@ const warmup = (self) => async (dbRoot = DB_ROOT, max = 10) => {
       let candidate = await readJson(join(dbRoot, `${partition}/${document}`))
       if (!candidate) continue
       if (candidates.includes(candidate)) continue
-      candidate = await self.refresh(candidate)
+      candidate = await self.refresh(candidate.id)
       if (!candidate) continue
-      candidates.push(candidate.__id)
+      candidates.push({ id: candidate.__id, updatedAt: Date.now() })
       candidates.sort(() => Math.random() - 0.5)
       await writeJson(join(dbRoot, 'candidates'), candidates)
       console.log(`${candidates.length} videos in line`)
@@ -182,7 +182,6 @@ module.exports = {
     await writeJson(documentPath, {
       __id: `${partition}-§§-${uid}`,
       ...object,
-      updatedAt: Date.now(),
     })
     await indexDocument(partition, uid, dbRoot)
   },
@@ -191,7 +190,6 @@ module.exports = {
     await writeJson(documentPath, {
       __id: `${partition}-§§-${id}`,
       ...object,
-      updatedAt: Date.now(),
     })
     await indexDocument(partition, id, dbRoot)
   },
