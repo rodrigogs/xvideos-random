@@ -118,7 +118,7 @@ module.exports = {
   },
   async getRandom(dbRoot = DB_ROOT) {
     warmup(this)(dbRoot)
-    const candidateIds = await readJson(join(dbRoot, 'candidates')) || []
+    const candidateIds = (await readJson(join(dbRoot, 'candidates')) || []).map(({ id }) => id)
     const candidates = await Promise.all(candidateIds.map(async (id) => {
       const [partition, uid] = id.split('-§§-')
       const filePath = join(dbRoot, partition, uid)
