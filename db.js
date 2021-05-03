@@ -123,8 +123,8 @@ module.exports = {
   },
   async getRandom(dbRoot = DB_ROOT) {
     warmup(this)(dbRoot)
-    const candidateIds = (await readJson(join(dbRoot, 'candidates')) || []).map(({ id }) => id)
-    const candidates = await Promise.all(candidateIds.map(async (id) => {
+    const candidatesList = (await readJson(join(dbRoot, 'candidates')) || [])
+    const candidates = await Promise.all(candidatesList.map(async ({ id }) => {
       const [partition, uid] = id.split('-§§-')
       const filePath = join(dbRoot, partition, uid)
       return await readJson(filePath)
@@ -133,9 +133,9 @@ module.exports = {
       if (!winner || candidate.weight > winner.weight) return candidate
       return winner
     }, undefined)
-    const winnerIndex = candidateIds.findIndex((id) => id === winner.__id)
-    candidateIds.splice(winnerIndex, 1)
-    await writeJson(join(dbRoot, 'candidates'), candidateIds)
+    const winnerIndex = candidatesList.findIndex(({ id }) => id === winner.__id)
+    candidatesList.splice(winnerIndex, 1)
+    await writeJson(join(dbRoot, 'candidates'), candidatesList)
     return winner
   },
   async count(dbRoot = DB_ROOT) {
