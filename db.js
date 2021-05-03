@@ -83,7 +83,10 @@ let warmingUp = false
 const warmup = (self) => async (dbRoot = DB_ROOT, max = 10) => {
   if (warmingUp) return
   warmingUp = true
-  const candidates = await readJson(join(dbRoot, 'candidates')) || []
+  const FIVE_MINUTES = 1000 * 60 * 5
+  const candidates = (await readJson(join(dbRoot, 'candidates')) || []).filter((candidate) => {
+    return candidate.updatedAt + FIVE_MINUTES < Date.now()
+  })
   do {
     try {
       const partition = await getRandomPartition(dbRoot)
@@ -155,8 +158,9 @@ module.exports = {
         },
       })
       const [partition, uid] = video.__id.split('-§§-')
-      await this.update(partition, uid, { ...video, ...detail }, dbRoot)
-      return { ...video, ...detail }
+      const updatedVideo = { ...video, ...detail }
+      await this.update(partition, uid, updatedVideo, dbRoot)
+      return updatedVideo
     } catch (err) {
       return undefined
     }
@@ -173,6 +177,7 @@ module.exports = {
     await writeJson(documentPath, {
       __id: `${partition}-§§-${uid}`,
       ...object,
+      updatedAt: Date.now(),
     })
     await indexDocument(partition, uid, dbRoot)
   },
@@ -181,6 +186,7 @@ module.exports = {
     await writeJson(documentPath, {
       __id: `${partition}-§§-${id}`,
       ...object,
+      updatedAt: Date.now(),
     })
     await indexDocument(partition, id, dbRoot)
   },
