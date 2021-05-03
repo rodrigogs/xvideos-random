@@ -4,6 +4,8 @@ const dontpad = require('dontpad-api')
 const zlib = require('zlib')
 const xvideos = require('@rodrigogs/xvideos')
 
+const cache = {}
+
 const DB_ROOT = process.env.DB_ROOT || 'db'
 
 const join = (...args) => args.join('/')
@@ -84,6 +86,9 @@ const warmup = (self) => async (dbRoot = DB_ROOT, max = 10) => {
   if (warmingUp) return
   warmingUp = true
   console.log('Warming up...')
+  self.summarize(dbRoot).then((summary) => {
+    cache['summary'] = summary
+  })
   const FIVE_MINUTES = 1000 * 60 * 5
   const candidates = (await readJson(join(dbRoot, 'candidates')) || []).filter((candidate) => {
     if (!candidate.updatedAt) return false
@@ -96,12 +101,9 @@ const warmup = (self) => async (dbRoot = DB_ROOT, max = 10) => {
       console.log(`Processing document: ${partition}/${document}`)
       if (!document) continue
       let candidate = await readJson(join(dbRoot, `${partition}/${document}`))
-      console.log('Candidate:', JSON.stringify(candidate))
       if (!candidate) continue
-      if (candidates.findIndex(({ id }) => candidate.__id) !== -1) continue
-      console.log('Candidates:', JSON.stringify(candidates))
-      candidate = await self.refresh(candidate.__id)
-      console.log('Updated candidate:', JSON.stringify(candidates))
+      if (candidates.findIndex(({ id }) => (id === candidate.__id)) !== -1) continue
+      candidate = await self.refresh(candidate)
       if (!candidate) continue
       candidates.push({ id: candidate.__id, updatedAt: Date.now() })
       candidates.sort(() => Math.random() - 0.5)
@@ -111,6 +113,7 @@ const warmup = (self) => async (dbRoot = DB_ROOT, max = 10) => {
       console.error(err)
     }
   } while(candidates.length < max)
+  console.log('Finished warming up')
   warmingUp = false
 }
 
@@ -171,6 +174,17 @@ module.exports = {
     } catch (err) {
       return undefined
     }
+  },
+  async summarize(dbRoot = DB_ROOT) {
+    const [videoIndexCount, requestsCount] = await Promise.all([
+      this.count(dbRoot),
+      this.count(`${dbRoot}/requests`),
+    ])
+    return { videoIndexCount, requestsCount }
+  },
+  async getSummary(dbRoot = DB_ROOT) {
+    if (cache['summary']) return cache['summary']
+    return this.summarize(dbRoot)
   },
   async get(id, dbRoot = DB_ROOT) {
     const [partition, uid] = id.split('-§§-')

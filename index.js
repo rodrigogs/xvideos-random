@@ -19,11 +19,8 @@ pug.use(app)
 const router = new Router()
 
 router.get('/', async (ctx) => {
-  await db.warmup('db', 1)
-  await ctx.render('index', {
-    videoIndexCount: await db.count(),
-    requestsCount: await db.count('db/requests'),
-  }, true)
+  const summary = await db.getSummary()
+  await ctx.render('index', summary, true)
 })
 
 router.get('/image', async (ctx) => {
