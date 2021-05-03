@@ -93,6 +93,7 @@ const warmup = (self) => async (dbRoot = DB_ROOT, max = 10) => {
     try {
       const partition = await getRandomPartition(dbRoot)
       const document = await getRandomDocument(partition, dbRoot)
+      console.log(`Processing document: ${document.__id}`)
       if (!document) continue
       let candidate = await readJson(join(dbRoot, `${partition}/${document}`))
       if (!candidate) continue
