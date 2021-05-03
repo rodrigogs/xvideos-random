@@ -77,9 +77,24 @@ const getRandomPartition = async (dbRoot = DB_ROOT) => {
 }
 
 const getRandomDocument = async (partition, dbRoot = DB_ROOT) => {
-  const documents = await readDir(join(dbRoot, partition))
-  return documents[randomIntFromInterval(0, documents.length - 1)]
+  const documents = await Promise
+    .all((await readDir(join(dbRoot, partition)))
+      .map((document) => readJson(join(dbRoot, partition, document))))
+  const randomIndex = randomIntFromInterval(0, documents.length - 1)
+  const winner = documents[randomIndex]
+  documents.splice(randomIndex, 1)
+  return documents.reduce((winner, current) => {
+    if (!winner) return current
+    if (winner.weight < current.weight) return current
+    return winner
+  }, winner)
 }
+
+const FIVE_MINUTES = 1000 * 60 * 5
+const getRecentCandidates = async (dbRoot = DB_ROOT) => (await readJson(join(dbRoot, 'candidates')) || []).filter((candidate) => {
+  if (!candidate.updatedAt) return false
+  return candidate.updatedAt + FIVE_MINUTES > Date.now()
+})
 
 let warmingUp = false
 const warmup = (self) => async (dbRoot = DB_ROOT, max = 10) => {
@@ -89,23 +104,19 @@ const warmup = (self) => async (dbRoot = DB_ROOT, max = 10) => {
   self.summarize(dbRoot).then((summary) => {
     cache['summary'] = summary
   })
-  const FIVE_MINUTES = 1000 * 60 * 5
-  const candidates = (await readJson(join(dbRoot, 'candidates')) || []).filter((candidate) => {
-    if (!candidate.updatedAt) return false
-    return candidate.updatedAt + FIVE_MINUTES > Date.now()
-  })
+  let candidates = await getRecentCandidates()
+  console.log(JSON.stringify(candidates.map(({id}) => id), null, 2))
   do {
     try {
       const partition = await getRandomPartition(dbRoot)
-      const document = await getRandomDocument(partition, dbRoot)
-      console.log(`Processing document: ${partition}/${document}`)
+      let document = await getRandomDocument(partition, dbRoot)
+      console.log(`Processing document: ${document.__id}`)
       if (!document) continue
-      let candidate = await readJson(join(dbRoot, `${partition}/${document}`))
-      if (!candidate) continue
-      if (candidates.findIndex(({ id }) => (id === candidate.__id)) !== -1) continue
-      candidate = await self.refresh(candidate)
-      if (!candidate) continue
-      candidates.push({ id: candidate.__id, updatedAt: Date.now() })
+      if (candidates.findIndex(({ id }) => (id === document.__id)) !== -1) continue
+      document = await self.refresh(document)
+      if (!document) continue
+      candidates = await getRecentCandidates()
+      candidates.push({ id: document.__id, updatedAt: Date.now() })
       candidates.sort(() => Math.random() - 0.5)
       await writeJson(join(dbRoot, 'candidates'), candidates)
       console.log(`${candidates.length} videos in line`)
