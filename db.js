@@ -105,7 +105,6 @@ const warmup = (self) => async (dbRoot = DB_ROOT, max = 10) => {
     cache['summary'] = summary
   })
   let candidates = await getRecentCandidates()
-  console.log(JSON.stringify(candidates.map(({id}) => id), null, 2))
   do {
     try {
       const partition = await getRandomPartition(dbRoot)
@@ -134,7 +133,7 @@ module.exports = {
   },
   async getRandom(dbRoot = DB_ROOT) {
     warmup(this)(dbRoot)
-    const candidatesList = (await readJson(join(dbRoot, 'candidates')) || [])
+    const candidatesList = await this.getCandidates(dbRoot)
     const candidates = await Promise.all(candidatesList.map(async ({ id }) => {
       const [partition, uid] = id.split('-§§-')
       const filePath = join(dbRoot, partition, uid)
@@ -196,6 +195,9 @@ module.exports = {
   async getSummary(dbRoot = DB_ROOT) {
     if (cache['summary']) return cache['summary']
     return this.summarize(dbRoot)
+  },
+  async getCandidates(dbRoot = DB_ROOT) {
+    return (await readJson(join(dbRoot, 'candidates'))) || []
   },
   async get(id, dbRoot = DB_ROOT) {
     const [partition, uid] = id.split('-§§-')

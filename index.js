@@ -20,7 +20,11 @@ const router = new Router()
 
 router.get('/', async (ctx) => {
   const summary = await db.getSummary()
-  await ctx.render('index', summary, true)
+  const candidates = await Promise.all((await db.getCandidates()).map((candidate) => {
+    return db.get(candidate.id)
+  }))
+  candidates.sort(() => Math.random() - 0.5)
+  await ctx.render('index', { summary, videos: candidates }, true)
 })
 
 router.get('/image', async (ctx) => {
