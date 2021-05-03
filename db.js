@@ -101,7 +101,9 @@ const warmup = (self) => async (dbRoot = DB_ROOT, max = 10) => {
   if (warmingUp) return
   warmingUp = true
   console.log('Warming up...')
-  self.summarize(dbRoot).then((summary) => {
+  cache['summary'] = await readJson(join(dbRoot, 'summary'))
+  self.summarize(dbRoot).then(async (summary) => {
+    await writeJson(join(dbRoot, 'summary'), summary)
     cache['summary'] = summary
   })
   let candidates = await getRecentCandidates()
