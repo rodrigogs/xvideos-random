@@ -100,6 +100,7 @@ const warmup = (self) => async (dbRoot = DB_ROOT, max = 10) => {
       candidates.push(candidate.__id)
       candidates.sort(() => Math.random() - 0.5)
       await writeJson(join(dbRoot, 'candidates'), candidates)
+      console.log(`${candidate.length} videos in line`)
     } catch (err) {
       console.error(err)
     }
