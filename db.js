@@ -83,6 +83,7 @@ let warmingUp = false
 const warmup = (self) => async (dbRoot = DB_ROOT, max = 10) => {
   if (warmingUp) return
   warmingUp = true
+  console.log('Warming up...')
   const FIVE_MINUTES = 1000 * 60 * 5
   const candidates = (await readJson(join(dbRoot, 'candidates')) || []).filter((candidate) => {
     if (!candidate.updatedAt) return false
@@ -95,8 +96,8 @@ const warmup = (self) => async (dbRoot = DB_ROOT, max = 10) => {
       if (!document) continue
       let candidate = await readJson(join(dbRoot, `${partition}/${document}`))
       if (!candidate) continue
-      if (candidates.includes(candidate)) continue
-      candidate = await self.refresh(candidate.id)
+      if (candidates.findIndex(({ id }) => candidate.__id) !== -1) continue
+      candidate = await self.refresh(candidate.__id)
       if (!candidate) continue
       candidates.push({ id: candidate.__id, updatedAt: Date.now() })
       candidates.sort(() => Math.random() - 0.5)
