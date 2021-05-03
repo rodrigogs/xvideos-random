@@ -8,6 +8,8 @@ const db = require('./db')
 
 require('./cache')
 
+db.warmup()
+
 const app = new Koa()
 const pug = new Pug({
   viewPath: path.resolve(__dirname, './views'),

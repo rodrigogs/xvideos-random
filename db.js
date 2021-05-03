@@ -85,9 +85,6 @@ const warmup = (self) => async (dbRoot = DB_ROOT, max = 10) => {
   warmingUp = true
   const FIVE_MINUTES = 1000 * 60 * 5
   const candidates = (await readJson(join(dbRoot, 'candidates')) || []).filter((candidate) => {
-    console.log('candidate', JSON.stringify(candidate))
-    console.log('candidate.updatedAt + FIVE_MINUTES', candidate.updatedAt + FIVE_MINUTES)
-    console.log('now', Date.now())
     if (!candidate.updatedAt) return false
     return candidate.updatedAt + FIVE_MINUTES > Date.now()
   })
